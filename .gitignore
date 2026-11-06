@@ -1,0 +1,11 @@
+data/
+__pycache__/
+*.pyc
+.env
+outputs/
+data-backup-*/
+data-test-backup*/
+*.sqlite
+*.sqlite-*
+.DS_Store
+.openai/
