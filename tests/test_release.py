@@ -2,8 +2,11 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler
 from unittest.mock import patch
+from urllib.request import urlopen
 
 spec = importlib.util.spec_from_file_location("release_backend", Path(__file__).resolve().parents[1] / "server.py")
 backend = importlib.util.module_from_spec(spec)
@@ -32,6 +35,50 @@ class ReleaseMetadataTests(unittest.TestCase):
                 path.write_text(json.dumps(data))
                 with self.assertRaises(ValueError):
                     backend.release_info()
+
+    def test_shutdown_drains_an_in_flight_http_request(self):
+        entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+        clients, replies = [], []
+        server_type = backend.ThreadingHTTPServer
+        class SlowHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                entered.set()
+                release.wait(3)
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"completed")
+                finished.set()
+            def log_message(self, *_):
+                pass
+        def construct(*_):
+            http = server_type(("127.0.0.1", 0), SlowHandler)
+            serve = http.serve_forever
+            def interrupted_serve():
+                threading.Thread(target=lambda: serve(poll_interval=0.01), daemon=True).start()
+                def request():
+                    with urlopen(f"http://127.0.0.1:{http.server_port}/", timeout=3) as response:
+                        replies.append(response.read())
+                client = threading.Thread(target=request)
+                clients.append(client)
+                client.start()
+                self.assertTrue(entered.wait(2))
+                threading.Timer(0.2, release.set).start()
+                http.shutdown()
+                raise KeyboardInterrupt
+            http.serve_forever = interrupted_serve
+            return http
+        try:
+            with tempfile.TemporaryDirectory() as directory, \
+                    patch("sys.argv", ["server.py", "--port", "0", "--db", str(Path(directory) / "test.sqlite")]), \
+                    patch.object(backend, "ThreadingHTTPServer", side_effect=construct), \
+                    patch.object(backend, "Store"), patch.object(backend.signal, "signal"):
+                backend.main()
+                self.assertTrue(finished.is_set(), "server_close must wait for the active handler, not abandon daemon workers")
+        finally:
+            release.set()
+            for client in clients:
+                client.join(3)
+        self.assertEqual(replies, [b"completed"])
 
 
 if __name__ == "__main__":

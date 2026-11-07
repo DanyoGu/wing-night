@@ -236,7 +236,7 @@ class Handler(SimpleHTTPRequestHandler):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=int(os.environ.get('PORT','8040')));parser.add_argument('--host',default='0.0.0.0');parser.add_argument('--db',default=os.environ.get('WING_DB',str(ROOT/'data'/'wing-night.sqlite')));parser.add_argument('--secure-cookies',action='store_true',default=os.environ.get('WING_SECURE_COOKIES')=='1');args=parser.parse_args()
     Path(args.db).parent.mkdir(parents=True,exist_ok=True)
-    server=ThreadingHTTPServer((args.host,args.port),Handler);server.store=Store(args.db);server.secure_cookies=args.secure_cookies;server.release=release_info()
+    server=ThreadingHTTPServer((args.host,args.port),Handler);server.daemon_threads=False;server.store=Store(args.db);server.secure_cookies=args.secure_cookies;server.release=release_info()
     # shutdown must run outside the serve_forever thread; server_close drains workers.
     signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown, daemon=True).start())
     print(f'Wing Night running at http://localhost:{args.port} (database: {args.db})',flush=True)
