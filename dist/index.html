@@ -23,6 +23,7 @@
 .question-bank{padding-left:21px;margin:14px 0 0}.question-bank li{font-size:14px;line-height:1.6;padding:11px 0 11px 3px;border-bottom:1px solid #2b3854}.question-bank li:first-child{padding-top:0}.question-bank li:last-child{border-bottom:0;padding-bottom:0}.question-bank li::marker{color:var(--muted);font-size:11px}
 </style>
 <link rel="stylesheet" href="lobby.css">
+<link rel="stylesheet" href="celebration.css">
 </head>
 <body><div id="connection-status" role="status" hidden></div><main class="app" id="lobby-view">
 <header><div class="brand" aria-hidden="true">♨</div><div class="title">Wing Night<small>DANIEL VS. JOICEE</small></div><span class="event">WAITING ROOM</span></header>
@@ -39,7 +40,7 @@
 <div class="section-head"><h2>The lineup</h2><span>10 ROUNDS</span></div>
 <div class="legend"><span>DANIEL</span><span>ROUND</span><span>JOICEE</span></div>
 <section id="rounds" aria-label="Wing rounds"></section><p class="hint">Tap a wing to open the player card &amp; vote</p>
-<section id="host-controls" class="lobby-card" hidden><div class="lobby-card-head"><h2 id="round-status"></h2><span id="submission-count" class="count-pill"></span></div><p id="waiting-judges"></p><details><summary>Manage judges</summary><p>Withdraw a departing judge to remove their grades from every round.</p><ul id="host-judge-roster" class="judge-list"></ul></details><button id="close-round" type="button" class="lobby-button">Close voting</button><button id="next-round" type="button" class="lobby-button" hidden>Next round →</button><p id="host-feedback" role="status"></p></section><p id="match-roster-history" class="roster-history"></p><p id="judge-round-status" class="lobby-footnote" role="status"></p>
+<section id="host-controls" class="lobby-card" hidden><div class="lobby-card-head"><h2 id="round-status"></h2><span id="submission-count" class="count-pill"></span></div><p id="waiting-judges"></p><details><summary>Manage judges</summary><p>Withdraw a departing judge to remove their grades from every round.</p><ul id="host-judge-roster" class="judge-list"></ul></details><button id="close-round" type="button" class="lobby-button">Close voting</button><button id="next-round" type="button" class="lobby-button" hidden>Next round →</button><p id="host-feedback" role="status"></p></section><div class="fire-actions"><button id="replay-celebration" type="button" hidden>Replay the winner celebration 🔥</button><button id="preview-celebration" type="button" hidden>Preview win animation 🔥</button></div><p id="match-roster-history" class="roster-history"></p><p id="judge-round-status" class="lobby-footnote" role="status"></p>
 </main>
 <section id="event-reset-control" class="app" hidden><button id="reset-event" type="button" class="roster-remove">Reset event</button><p class="lobby-footnote">Host only · Clear this event’s judges, votes, and results.</p><p id="reset-feedback" role="status" class="roster-history"></p></section>
 <dialog id="details" aria-labelledby="player-name">
@@ -144,4 +145,5 @@ window.addEventListener('wing-shared-state',renderMatch);
 window.addEventListener('wing-connection',()=>{if(window.sharedState?.rounds)renderSharedMatch();if(dialog.open)updateVoteProgress()});
 renderMatch();
 </script>
-<script src="lobby.js"></script></body></html>
+<dialog id="victory-dialog" aria-labelledby="fire-title" aria-describedby="fire-margin"><div class="fire-card" id="fire-card"><button type="button" class="fire-close" id="fire-close" aria-label="Close winner celebration">×</button><div id="fire-embers" class="fire-embers" aria-hidden="true"></div><p class="fire-kicker" id="fire-kicker"></p><p class="fire-subtitle" id="fire-subtitle"></p><h2 class="fire-title" id="fire-title"></h2><div class="fire-portraits" id="fire-portraits"></div><div class="fire-scores"><div id="fire-daniel-result"><span>Daniel</span><strong id="fire-daniel-score"></strong></div><span class="fire-vs">VS</span><div id="fire-joicee-result"><span>Joicee</span><strong id="fire-joicee-score"></strong></div></div><p class="fire-margin" id="fire-margin"></p><button type="button" class="fire-return" id="fire-return">Back to matchup</button><p class="fire-preview-note" id="fire-preview-note" hidden>Preview only · Your votes and results are unchanged.</p><canvas id="fire-canvas" class="fire-canvas" aria-hidden="true"></canvas></div></dialog>
+<script src="celebration.js"></script><script src="lobby.js"></script></body></html>

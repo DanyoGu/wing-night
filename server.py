@@ -195,7 +195,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if parsed.path.startswith('/api/'):
             self.reply({'error':'Not found'},404);return
-        if parsed.path not in ('/','/index.html','/lobby.css','/lobby.js','/shared.js') and not parsed.path.startswith('/assets/'):
+        if parsed.path not in ('/','/index.html','/lobby.css','/lobby.js','/shared.js','/celebration.css','/celebration.js') and not parsed.path.startswith('/assets/'):
             self.send_error(404);return
         super().do_GET()
     def do_POST(self):
