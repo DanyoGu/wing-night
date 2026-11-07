@@ -5,9 +5,12 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import secrets
+import signal
 import sqlite3
+import threading
 import time
 from http import HTTPStatus
 from http.cookies import SimpleCookie
@@ -16,6 +19,19 @@ from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parent
 PROJECTIONS = [(8.42,8.74),(8.86,9.12),(9.03,8.65),(8.78,9.36),(9.14,8.92),(8.67,9.08),(9.21,8.46),(8.54,8.83),(8.96,9.17),(9.08,9.42)]
+
+def release_info():
+    path = ROOT / 'release.json'
+    if not path.is_file():
+        return {'version': 'v0.0', 'revision': 'development', 'commit_count': 0}
+    release = json.loads(path.read_text())
+    count, revision = release['commit_count'], release['revision']
+    if (type(count) is not int or count < 0 or
+            not isinstance(revision, str) or
+            (revision != 'development' and not re.fullmatch('[0-9a-f]{40}', revision)) or
+            release['version'] != f'v0.{count}'):
+        raise ValueError('Invalid build release metadata')
+    return release
 
 class APIError(Exception):
     def __init__(self, message, status=400):
@@ -189,13 +205,15 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers();self.wfile.write(body)
     def do_GET(self):
         parsed=urlsplit(self.path)
+        if parsed.path=='/api/version':
+            self.reply(self.server.release);return
         if parsed.path=='/api/state':
             try:self.reply(self.server.store.state(parse_qs(parsed.query).get('room',[''])[0].upper(),self.token()))
             except APIError as e:self.reply({'error':e.message},e.status)
             return
         if parsed.path.startswith('/api/'):
             self.reply({'error':'Not found'},404);return
-        if parsed.path not in ('/','/index.html','/lobby.css','/lobby.js','/shared.js','/celebration.css','/celebration.js') and not parsed.path.startswith('/assets/'):
+        if parsed.path not in ('/','/index.html','/lobby.css','/lobby.js','/shared.js','/celebration.css','/celebration.js','/version.js') and not parsed.path.startswith('/assets/'):
             self.send_error(404);return
         super().do_GET()
     def do_POST(self):
@@ -218,8 +236,11 @@ class Handler(SimpleHTTPRequestHandler):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=int(os.environ.get('PORT','8040')));parser.add_argument('--host',default='0.0.0.0');parser.add_argument('--db',default=os.environ.get('WING_DB',str(ROOT/'data'/'wing-night.sqlite')));parser.add_argument('--secure-cookies',action='store_true',default=os.environ.get('WING_SECURE_COOKIES')=='1');args=parser.parse_args()
     Path(args.db).parent.mkdir(parents=True,exist_ok=True)
-    server=ThreadingHTTPServer((args.host,args.port),Handler);server.store=Store(args.db);server.secure_cookies=args.secure_cookies
+    server=ThreadingHTTPServer((args.host,args.port),Handler);server.store=Store(args.db);server.secure_cookies=args.secure_cookies;server.release=release_info()
+    # shutdown must run outside the serve_forever thread; server_close drains workers.
+    signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown, daemon=True).start())
     print(f'Wing Night running at http://localhost:{args.port} (database: {args.db})',flush=True)
+    print(f"Build {server.release['version']} revision {server.release['revision']}",flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:server.server_close()

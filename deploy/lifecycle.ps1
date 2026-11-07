@@ -210,6 +210,7 @@ function CheckOwned($group, $names) {
         'nic-hotones'='Microsoft.Network/networkInterfaces'; 'nsg-hotones'='Microsoft.Network/networkSecurityGroups';
         'sthotones20261106'='Microsoft.Storage/storageAccounts'; 'aa-hotones'='Microsoft.Automation/automationAccounts';
         'aa-hotones/hotones-lifecycle'='Microsoft.Automation/automationAccounts/runbooks';
+        'id-hotones-deploy'='Microsoft.ManagedIdentity/userAssignedIdentities';
         'acs-hotones'='Microsoft.Communication/CommunicationServices'; 'email-hotones'='Microsoft.Communication/EmailServices';
         'email-hotones/AzureManagedDomain'='Microsoft.Communication/EmailServices/Domains';
         'eg-hotones-email'='Microsoft.EventGrid/systemTopics'; 'ag-hotones'='Microsoft.Insights/actionGroups';
@@ -255,7 +256,7 @@ if ($Action -eq 'Retire' -and -not (Exists 'rg-hotones-backups')) {
     if ((Exists 'rg-hotones-event') -or $metadata.tags.cleanupVerified -ne 'export-email-event-deletion-confirmed') {
         throw 'Missing backups without independent retirement marker; manual recovery required'
     }
-    CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
+    CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','id-hotones-deploy','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
     Arm DELETE "$root/rg-hotones-lifecycle`?api-version=2022-09-01" | Out-Null
     Write-Output 'Resumed verified lifecycle retirement after backup deletion'
     return
@@ -277,7 +278,7 @@ try {
     if ($Action -eq 'Verify') {
         CheckOwned 'rg-hotones-event' @('vm-hotones','disk-hotones-os','disk-hotones-data','pip-hotones','vnet-hotones','nic-hotones','nsg-hotones')
         CheckOwned 'rg-hotones-backups' @('sthotones20261106')
-        CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
+        CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','id-hotones-deploy','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
         $export = Export
         # An intentionally invalid request verifies authentication without sending email.
         try {
@@ -323,7 +324,7 @@ try {
     } elseif ($Action -eq 'Retire') {
         if ($script:state.cleanup -ne 'event-deleted' -or (Exists 'rg-hotones-event')) { throw 'Event cleanup not complete; preserving backups' }
         CheckOwned 'rg-hotones-backups' @('sthotones20261106')
-        CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
+        CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','id-hotones-deploy','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
         $script:state.cleanup = 'retirement-verified'
         SaveState
         Arm PATCH "$root/rg-hotones-lifecycle`?api-version=2022-09-01" (JsonBody @{tags=@{

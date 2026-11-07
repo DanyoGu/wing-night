@@ -1,7 +1,8 @@
 # Temporary Azure deployment
 
-The November 2026 deployment serves https://hotones.alvinli.work from source revision
-`852fd6ed201217e1474253527322600daf761a7e`. This is a fresh event database; the host
+The November 2026 deployment serves https://hotones.alvinli.work. The initial
+bootstrap used `852fd6ed201217e1474253527322600daf761a7e`; the current running build
+and exact revision are available at `/api/version`. This is a fresh event database; the host
 creates the real event in their own browser. Keep that browser's cookies.
 
 ## Resources and traffic
@@ -125,3 +126,43 @@ and backups active, and saves private test sessions for restart checks. It never
 resets a real room. `restore_verify.py` downloads actual off-VM snapshots, verifies
 checksums/integrity, reopens restored SQLite and checks exact validation scores.
 Never publish its downloaded SQLite data or private session/SSH key files.
+
+## Push-to-main releases
+
+`.github/workflows/deploy-main.yml` triggers on every GitHub push to **main**.
+Backend/browser tests and an immutable Docker build precede deployment. Full-history
+checkout (`fetch-depth: 0`) and `git rev-list --count HEAD` generate `v0.N`; merge
+commits are included in the reachable count. The count and exact Git SHA are baked
+into the image and returned by the running `/api/version`, never set from a queued
+release. The small footer shows this build and warns an already-open page to reload
+if the server revision changes. Static assets revalidate and version metadata is
+`no-store`.
+
+The workflow authenticates through Azure OIDC, with issuer
+`https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`,
+and subject `repo:DanyoGu/wing-night:ref:refs/heads/main`. User-assigned identity
+`id-hotones-deploy` lives in the owned lifecycle group. Its custom Azure role is
+scoped to inspecting/running commands on **only the existing VM**; blob contribution
+is scoped to the private `releases` container. VM identity has only reader access
+to that release path. Repository variables hold public client/tenant/subscription
+IDs, not credentials. There is no Azure/client/storage secret or subscription-wide
+Contributor assignment.
+
+GitHub concurrency serializes releases without canceling an in-progress switch.
+The VM agent additionally locks deployments and checks the requested SHA against
+current authoritative main; superseded runs do not replace a newer revision.
+GitHub-hosted builds upload a checksummed image to the owned blob account. The
+trusted root agent `/usr/local/sbin/wing-release` validates image metadata and the
+data-disk UUID, takes a successful SQLite-aware off-VM backup, gracefully drains
+the previous Python process, and switches the systemd image while keeping exactly
+one live SQLite writer. Existing mount, cookies, room identities and database are
+retained. Health and exact version are verified over HTTPS by the hosted job.
+
+On failure after switching, the previous image and unit are restored with a bounded
+health check; **the database is never restored/reset automatically**. Current and
+previous images remain available for rollback, with older owned images pruned.
+Deployment can briefly interrupt requests; open judge drafts are not forcibly
+reloaded. Monday reporting/deletion schedules are unchanged. Both workflow and VM
+agent reject releases at/after the shutdown deadline, and the workflow only reads
+the existing VM, never provisions/recreates infrastructure after cleanup. The
+identity and release artifacts are deleted with their already-owned resource groups.

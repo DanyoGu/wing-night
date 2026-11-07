@@ -1,0 +1,10 @@
+{
+  "Name": "Hotones main VM deployment",
+  "IsCustom": true,
+  "Description": "Inspect and execute releases on the existing event VM only; cannot provision or delete Azure resources.",
+  "Actions": ["Microsoft.Compute/virtualMachines/read", "Microsoft.Compute/virtualMachines/runCommand/action", "Microsoft.Compute/locations/operations/read"],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": ["/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-event"]
+}
