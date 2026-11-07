@@ -205,6 +205,7 @@ function SendReport($slot, $export, $subject) {
 function CheckOwned($group, $names) {
     $types = @{
         'vm-hotones'='Microsoft.Compute/virtualMachines';
+        'vm-hotones/hotones-main-release'='Microsoft.Compute/virtualMachines/runCommands';
         'disk-hotones-os'='Microsoft.Compute/disks'; 'disk-hotones-data'='Microsoft.Compute/disks';
         'pip-hotones'='Microsoft.Network/publicIPAddresses'; 'vnet-hotones'='Microsoft.Network/virtualNetworks';
         'nic-hotones'='Microsoft.Network/networkInterfaces'; 'nsg-hotones'='Microsoft.Network/networkSecurityGroups';
@@ -276,7 +277,7 @@ try {
         $script:state = [pscustomobject]@{verified=$null; sunday=$null; final=$null; cleanup='pending'}
     }
     if ($Action -eq 'Verify') {
-        CheckOwned 'rg-hotones-event' @('vm-hotones','disk-hotones-os','disk-hotones-data','pip-hotones','vnet-hotones','nic-hotones','nsg-hotones')
+        CheckOwned 'rg-hotones-event' @('vm-hotones','vm-hotones/hotones-main-release','disk-hotones-os','disk-hotones-data','pip-hotones','vnet-hotones','nic-hotones','nsg-hotones')
         CheckOwned 'rg-hotones-backups' @('sthotones20261106')
         CheckOwned 'rg-hotones-lifecycle' @('aa-hotones','aa-hotones/hotones-lifecycle','id-hotones-deploy','acs-hotones','email-hotones','email-hotones/AzureManagedDomain','eg-hotones-email','ag-hotones','alert-hotones-jobs')
         $export = Export
@@ -298,7 +299,7 @@ try {
             throw 'Sunday export and recipient-mail-server acceptance are not verified; refusing deletion'
         }
         if (Exists 'rg-hotones-event') {
-            CheckOwned 'rg-hotones-event' @('vm-hotones','disk-hotones-os','disk-hotones-data','pip-hotones','vnet-hotones','nic-hotones','nsg-hotones')
+            CheckOwned 'rg-hotones-event' @('vm-hotones','vm-hotones/hotones-main-release','disk-hotones-os','disk-hotones-data','pip-hotones','vnet-hotones','nic-hotones','nsg-hotones')
             if ($script:state.cleanup -eq 'event-deleted') { throw 'Event group reappeared after deletion; refusing unexpected recreation' }
             if ($script:state.cleanup -ne 'export-and-email-verified') {
                 $export = Export $true

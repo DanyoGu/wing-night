@@ -58,16 +58,48 @@ jobs:
             exit 0
           fi
           test "$(date -u +%s)" -lt "$(date -u -d '2026-11-09T13:00:00Z' +%s)"
-          az vm show -g rg-hotones-event -n vm-hotones --query id -o tsv
+          VM_ID="$(az vm show -g rg-hotones-event -n vm-hotones --query id -o tsv)"
+          export VM_ID
           az storage blob upload --auth-mode login --account-name sthotones20261106 --container-name releases --name "$GITHUB_SHA/image.tgz" --file image.tgz --overwrite --only-show-errors -o none
-          az vm run-command invoke -g rg-hotones-event -n vm-hotones --command-id RunShellScript --scripts "set -eu; timeout 600 python3 /usr/local/sbin/wing-release $GITHUB_SHA $COMMIT_COUNT $ARTIFACT_SHA256" --only-show-errors -o json > deployment.json
-          cat deployment.json
           python - <<'PY'
-          import json, os, sys, urllib.request
-          for item in json.load(open("deployment.json"))["value"]:
-              stderr = item["message"].partition("[stderr]")[2].strip()
-              if stderr:
-                  raise SystemExit("VM release reported an error: " + stderr)
+          import json, os
+          script = (f"set -eu\n# GitHub run {os.environ['GITHUB_RUN_ID']} attempt {os.environ['GITHUB_RUN_ATTEMPT']}\n"
+                    f"timeout 600 python3 /usr/local/sbin/wing-release {os.environ['GITHUB_SHA']} {os.environ['COMMIT_COUNT']} {os.environ['ARTIFACT_SHA256']}\n")
+          json.dump({"location": "eastus", "tags": {"managedBy": "wing-night-deployment", "event": "2026-11-08"},
+                     "properties": {"source": {"script": script}, "asyncExecution": True, "timeoutInSeconds": 720}},
+                    open("command.json", "w"))
+          PY
+          export RELEASE_REQUESTED_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          az rest --method put --uri "$VM_ID/runCommands/hotones-main-release?api-version=2024-11-01" --body @command.json -o none
+          python - <<'PY'
+          import json, os, subprocess, time, urllib.request
+          from datetime import datetime
+          uri = os.environ["VM_ID"] + "/runCommands/hotones-main-release?api-version=2024-11-01&%24expand=instanceView"
+          requested = datetime.fromisoformat(os.environ["RELEASE_REQUESTED_UTC"].replace("Z", "+00:00"))
+          for attempt in range(90):
+              status = subprocess.run(["az", "rest", "--method", "get", "--uri", uri, "-o", "json"], text=True, capture_output=True)
+              if status.returncode:
+                  if "ResourceNotFound" not in status.stderr:
+                      raise SystemExit("VM release status query failed: " + status.stderr)
+                  print("Waiting for managed release command registration.", flush=True)
+              else:
+                  command = json.loads(status.stdout)
+                  view = command.get("properties", {}).get("instanceView", {})
+                  started = view.get("startTime")
+                  if started and datetime.fromisoformat(started.replace("Z", "+00:00")) >= requested:
+                      state = view.get("executionState")
+                      if state in ("Failed", "TimedOut", "Canceled"):
+                          raise SystemExit("VM release failed: " + json.dumps(view))
+                      if state == "Succeeded":
+                          if view.get("exitCode") != 0 or view.get("error"):
+                              raise SystemExit("VM release reported an error: " + json.dumps(view))
+                          json.dump(command, open("deployment.json", "w"), indent=2)
+                          print("VM release result:", json.dumps(view), flush=True)
+                          break
+                  print("Waiting for this release's bounded VM execution.", flush=True)
+              time.sleep(10)
+          else:
+              raise SystemExit("Timed out waiting for the managed VM release; inspect its instance view before retrying.")
           expected = {"version": "v0." + os.environ["COMMIT_COUNT"], "revision": os.environ["GITHUB_SHA"], "commit_count": int(os.environ["COMMIT_COUNT"])}
           with urllib.request.urlopen("https://hotones.alvinli.work/api/version", timeout=20) as response:
               actual = json.load(response)

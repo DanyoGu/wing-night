@@ -140,9 +140,14 @@ if the server revision changes. Static assets revalidate and version metadata is
 
 The workflow authenticates through Azure OIDC, with issuer
 `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`,
-and subject `repo:DanyoGu/wing-night:ref:refs/heads/main`. User-assigned identity
+and exact immutable-ID subject
+`repo:DanyoGu@23494690/wing-night@1448826908:ref:refs/heads/main`. This is the
+subject actually issued by GitHub for this repository, including owner/repository
+IDs and only the main ref. User-assigned identity
 `id-hotones-deploy` lives in the owned lifecycle group. Its custom Azure role is
-scoped to inspecting/running commands on **only the existing VM**; blob contribution
+scoped to VM read and managed-run-command read/write on **only the existing VM**;
+the workflow uses that child's instance view for bounded execution/exit-code
+tracking, avoiding subscription/region-wide operation-reader permissions. Blob contribution
 is scoped to the private `releases` container. VM identity has only reader access
 to that release path. Repository variables hold public client/tenant/subscription
 IDs, not credentials. There is no Azure/client/storage secret or subscription-wide
