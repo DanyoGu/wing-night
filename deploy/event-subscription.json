@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "eventDeliverySchema": "EventGridSchema",
+    "filter": {"includedEventTypes": ["Microsoft.Communication.EmailDeliveryReportReceived"]},
+    "deliveryWithResourceIdentity": {
+      "identity": {"type": "SystemAssigned"},
+      "destination": {
+        "endpointType": "StorageQueue",
+        "properties": {
+          "resourceId": "/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-backups/providers/Microsoft.Storage/storageAccounts/sthotones20261106",
+          "queueName": "email-delivery",
+          "queueMessageTimeToLiveInSeconds": 86400
+        }
+      }
+    },
+    "retryPolicy": {"maxDeliveryAttempts": 20, "eventTimeToLiveInMinutes": 1440}
+  }
+}

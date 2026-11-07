@@ -1,0 +1,14 @@
+{
+  "Name": "Hotones dedicated group cleanup",
+  "IsCustom": true,
+  "Description": "Delete only the three owned event resource groups after verified export and email.",
+  "Actions": ["Microsoft.Resources/subscriptions/resourceGroups/read", "Microsoft.Resources/subscriptions/resourceGroups/write", "Microsoft.Resources/subscriptions/resourceGroups/delete", "Microsoft.Resources/subscriptions/resourceGroups/resources/read"],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-event",
+    "/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-backups",
+    "/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-lifecycle"
+  ]
+}

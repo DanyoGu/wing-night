@@ -1,0 +1,6 @@
+{
+  "location": "eastus",
+  "tags": {"workload": "hotones-event", "managedBy": "wing-night-deployment", "event": "2026-11-08"},
+  "identity": {"type": "SystemAssigned"},
+  "properties": {"sku": {"name": "Basic"}, "publicNetworkAccess": true, "disableLocalAuth": true}
+}

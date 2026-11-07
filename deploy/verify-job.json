@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "runbook": {"name": "hotones-lifecycle"},
+    "parameters": {"Action": "Verify"}
+  }
+}

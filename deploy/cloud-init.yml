@@ -1,0 +1,25 @@
+#cloud-config
+package_update: true
+packages:
+  - docker.io
+  - caddy
+  - python3
+  - sqlite3
+write_files:
+  - path: /etc/caddy/Caddyfile
+    permissions: '0644'
+    content: |
+      hotones.alvinli.work {
+        reverse_proxy 127.0.0.1:8040
+      }
+  - path: /etc/systemd/journald.conf.d/wing-night.conf
+    permissions: '0644'
+    content: |
+      [Journal]
+      SystemMaxUse=100M
+      MaxRetentionSec=3day
+runcmd:
+  - systemctl enable --now docker
+  - systemctl restart systemd-journald
+  - systemctl enable caddy
+  - systemctl restart caddy

@@ -1,0 +1,27 @@
+{
+  "location": "global",
+  "tags": {"workload": "hotones-event", "managedBy": "wing-night-deployment", "event": "2026-11-08"},
+  "properties": {
+    "description": "Backup heartbeat, export, email or guarded teardown job failed; preserve event data and investigate.",
+    "severity": 1,
+    "enabled": true,
+    "scopes": ["/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-lifecycle/providers/Microsoft.Automation/automationAccounts/aa-hotones"],
+    "evaluationFrequency": "PT1M",
+    "windowSize": "PT5M",
+    "autoMitigate": true,
+    "criteria": {
+      "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+      "allOf": [{
+        "name": "failed-jobs",
+        "metricNamespace": "Microsoft.Automation/automationAccounts",
+        "metricName": "TotalJob",
+        "dimensions": [{"name": "Status", "operator": "Include", "values": ["Failed", "Suspended", "Stopped"]}],
+        "operator": "GreaterThan",
+        "threshold": 0,
+        "timeAggregation": "Total",
+        "criterionType": "StaticThresholdCriterion"
+      }]
+    },
+    "actions": [{"actionGroupId": "/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-lifecycle/providers/Microsoft.Insights/actionGroups/ag-hotones"}]
+  }
+}

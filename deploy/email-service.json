@@ -1,0 +1,5 @@
+{
+  "location": "global",
+  "tags": {"workload": "hotones-event", "managedBy": "wing-night-deployment", "event": "2026-11-08"},
+  "properties": {"dataLocation": "United States"}
+}

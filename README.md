@@ -47,7 +47,9 @@ SQLite is stored in `data/wing-night.sqlite`, excluded from Git. The server stor
 
 ## Public hosting
 
-This backend needs one Python service with a **persistent disk**, plus HTTPS. It does not run on a static-only host or the current static Sites deployment. Mount the persistent disk at `/data`, set `WING_DB=/data/wing-night.sqlite` and `WING_SECURE_COOKIES=1`, and forward traffic to the service's `PORT` while preserving the original Host and Origin. Use a single service instance; SQLite is local to its disk. Back up the database before the event. The supplied Dockerfile packages this setup; hosting is not configured or deployed yet.
+This backend needs one Python service with a **persistent disk**, plus HTTPS. It does not run on a static-only host or the current static Sites deployment. Mount the persistent disk at `/data`, set `WING_DB=/data/wing-night.sqlite` and `WING_SECURE_COOKIES=1`, and forward traffic to the service's `PORT` while preserving the original Host and Origin. Use a single service instance; SQLite is local to its disk. Back up the database before the event. The supplied Dockerfile packages this setup.
+
+The temporary November 2026 Azure deployment is available at https://hotones.alvinli.work. See [deployment operations](deploy/README.md) for disk persistence, private backups, scheduled email reporting, and guarded Monday teardown.
 
 Never commit the database or expose its directory through static file hosting. Only `dist/` is served to visitors. A host-only Reset event button clears the current room’s judges, votes, results, and roster history after typing RESET. Host identity and room code are retained; other rooms are unaffected. All judges must rejoin. Stale reset requests are rejected using the event generation. Host-authorized roster changes remove the affected judge’s grades; no other vote-deletion endpoint is exposed.
 

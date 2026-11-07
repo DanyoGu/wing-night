@@ -1,0 +1,11 @@
+{
+  "location": "eastus",
+  "tags": {"workload": "hotones-event", "managedBy": "wing-night-deployment", "event": "2026-11-08"},
+  "properties": {
+    "runbookType": "PowerShell",
+    "runtimeVersion": "5.1",
+    "logVerbose": false,
+    "logProgress": false,
+    "description": "Verified reports, backup heartbeat and guarded event-only cleanup"
+  }
+}

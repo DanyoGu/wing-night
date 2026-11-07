@@ -1,0 +1,10 @@
+{
+  "Name": "Hotones event email sender",
+  "IsCustom": true,
+  "Description": "Communication API access on the dedicated event sender, without keys or deletion.",
+  "Actions": ["Microsoft.Communication/CommunicationServices/Read", "Microsoft.Communication/CommunicationServices/Write"],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": ["/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-lifecycle"]
+}

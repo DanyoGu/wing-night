@@ -1,0 +1,8 @@
+{
+  "location": "global",
+  "tags": {"workload": "hotones-event", "managedBy": "wing-night-deployment", "event": "2026-11-08"},
+  "properties": {
+    "dataLocation": "United States",
+    "linkedDomains": ["/subscriptions/26e7b9c0-b9a9-4745-9150-2a87fdb9749e/resourceGroups/rg-hotones-lifecycle/providers/Microsoft.Communication/emailServices/email-hotones/domains/AzureManagedDomain"]
+  }
+}
